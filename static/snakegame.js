@@ -8,7 +8,28 @@ let score = 0;
 let dx = gridSize; // Starting movement in the x-direction
 let dy = 0;
 let gameLoop;
-let IntervalX = 200;
+let IntervalX = 100; // The actual speed of the game
+let keyPressed = false; // Flag to track if a key is currently down
+
+// Listen for keyboard input
+document.addEventListener('keydown', handleKeys);
+
+// Call resizeCanvas initially to set the starting size
+resizeCanvas();
+
+// Add an event listener to resize when the window is resized
+window.addEventListener('resize', resizeCanvas); 
+
+document.addEventListener('keyup', () => {
+    keyPressed = false;  // Reset the flag when a key is released
+});
+
+canvas.addEventListener('touchstart', handleTouchStart, false);
+canvas.addEventListener('touchmove', handleTouchMove, false);
+
+// Start things off
+generateFood();
+gameLoop = setInterval(main, IntervalX); 
 
 // Main game loop
 function main() {
@@ -24,8 +45,6 @@ function main() {
     drawFood();
     drawSnake();
 }
-
-gameLoop = setInterval(main, IntervalX); 
 
 // Update game state if snake hits boundaries or itself
 function gameOver() {
@@ -136,18 +155,25 @@ function drawSnake() {
     })
 }
 
-// Listen for keyboard input
-document.addEventListener('keydown', changeDirection);
+function handleKeys(event) {
+    // Ignores the keypress variable to restart whenever we feel like it
+    // BUG: Only fires if you actually died for some reason. 
+    if (event.key === 'r' || event.key === 'R') { // Accept both lowercase and uppercase 'r'
+        if (gameOver()) {
+            restartGame();
+        }
+    }
 
-let gameSpeed = 25; // Initialize a starting speed
-function changeDirection(event) {
+
+    if (keyPressed) return;
+
     const LEFT_KEY = 37;
     const RIGHT_KEY = 39;
     const UP_KEY = 38;
     const DOWN_KEY = 40;
 
     // Prevent snake from reversing 
-    const keyPressed = event.keyCode;
+    // const keyPressed = event.keyCode;
     const goingUp = dy === -gridSize;
     const goingDown = dy === gridSize;
     const goingRight = dx === gridSize;
@@ -157,12 +183,20 @@ function changeDirection(event) {
     if (keyPressed === UP_KEY && !goingDown) { dx = 0; dy = -gridSize; }
     if (keyPressed === RIGHT_KEY && !goingLeft) { dx = gridSize; dy = 0; }
     if (keyPressed === DOWN_KEY && !goingUp) { dx = 0; dy = gridSize; }
+    if (event.key === 'a' && !goingRight) { dx = -gridSize; dy = 0; }
+    if (event.key === 'w' && !goingDown) { dx = 0; dy = -gridSize; }
+    if (event.key === 'd' && !goingLeft) { dx = gridSize; dy = 0; }
+    if (event.key === 's' && !goingUp) { dx = 0; dy = gridSize; }
+
+    // Advance the snake on input to deal with the hiccup on movement
+    //advanceSnake();
 
     // Clear any existing game loop interval
     clearInterval(gameLoop);
 
     // Start a new loop based on desired speed
-    gameLoop = setInterval(main, gameSpeed);
+    gameLoop = setInterval(main, IntervalX);
+    keyPressed = true; // Set the flag 
 }
 
 // Function to resize the canvas 
@@ -171,20 +205,33 @@ function resizeCanvas() {
     canvas.height = window.innerHeight - 25;
 }
 
-// Call resizeCanvas initially to set the starting size
-resizeCanvas();
+let startX, startY;
 
-// Add an event listener to resize when the window is resized
-window.addEventListener('resize', resizeCanvas); 
+function handleTouchStart(e) {
+    e.preventDefault();
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+}
 
-document.addEventListener('keydown', function (event) {
-    if (event.key === 'r' || event.key === 'R') { // Accept both lowercase and uppercase 'r'
-        if (gameOver()) {
-            restartGame();
-        }
+function handleTouchMove(e) {
+    e.preventDefault();
+    const endX = e.touches[0].clientX;
+    const endY = e.touches[0].clientY;
+
+    const diffX = endX - startX;
+    const diffY = endY - startY;
+
+    if (Math.abs(diffX) > Math.abs(diffY)) {
+        // Horizontal swipe
+        if (diffX > 0 && !goingLeft) { dx = gridSize; dy = 0; }
+        else if (diffX < 0 && !goingRight) { dx = -gridSize; dy = 0; }
+    } else {
+        // Vertical swipe
+        if (diffY > 0 && !goingUp) { dx = 0; dy = gridSize; }
+        else if (diffY < 0 && !goingDown) { dx = 0; dy = -gridSize; }
     }
-});
 
-// Start things off
-generateFood();
-gameLoop = setInterval(main, 100); 
+    // Reset start positions for the next swipe
+    startX = endX;
+    startY = endY;
+}
