@@ -1,9 +1,9 @@
 document.getElementById("version1").addEventListener("click", function () {
-    loadScript("snakegame_V1.js", startGame);
+    loadScript("static/snakegame_V1.js");
 });
 
 document.getElementById("version2").addEventListener("click", function () {
-    loadScript("snakegame_V2.js", startGame);
+    loadScript("static/snakegame_V2.js");
 });
 
 function loadScript(scriptPath, callback) {
