@@ -1,4 +1,5 @@
 import logging
+import sys
 from flask import Flask, render_template
 app = Flask(__name__)
 
@@ -12,6 +13,17 @@ def Webpage():
     return render_template('Webpage.html')
 
 if __name__ == '__main__':
+    # Break arguments
+    arguments = sys.argv
+    
+    ListenAddr = ""
+    ListenPort = 0
+
+    # Skip the first argument (script name)
+    for argument in arguments[1:]:
+        print("[Startup]: " + argument)
+        # Parse these later
+    
     import os
     HOST = '0.0.0.0'
     try:
